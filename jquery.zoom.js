@@ -33,97 +33,93 @@
 	"use strict";
 
 	$.fn.zoom = function(config) {
-		
-		/**
-		 * @desc binding the _self to an var
-		*/
-		var _self = $(this);
+
+		var $self = $(this);
 
 		/**
-		 * config
-		 * @desc container which contains the configions
+		 * container which contains the configions.
 		*/
 		var config =  $.extend({
-				 'bigImgSrc'			: _self.data('img')
-				,'bigImgWidth' 			: _self.data('width')
-				,'bigImgHeight' 		: _self.data('height')
-				,'orgImgWidth'			: _self.attr('width')
-				,'orgImgHeight'			: _self.attr('height')
+				 'bigImgSrc'			: $self.data('img')
+				,'bigImgWidth' 			: $self.data('width')
+				,'bigImgHeight' 		: $self.data('height')
+				,'orgImgWidth'			: $self.attr('width')
+				,'orgImgHeight'			: $self.attr('height')
 				,'zoomContainerWidth' 	: 300
 				,'zoomContainerHeight' 	: 200
 			}, config);
 
-		if(		typeof(config['bigImgWidth']) === "undefined" 
-			||  typeof(config['bigImgHeight']) === "undefined" 
-			|| typeof(config['bigImgSrc']) === "undefined"
-		){
+		var HANDLER = {
+			mousemove : function(e) {
+
+				var offset	=	$self.offset(),
+					offsetX	=	offset.left,
+					offsetY	=	offset.top,
+					x 		=	e.pageX - offsetX,
+					y		=	e.pageY - offsetY
+				;
+
+				/**
+				 * move position of zoomContainer.
+				*/
+				$zoomContainer.css({
+					 'top' 	: (e.clientY + 10)
+					,'left' : (e.clientX + 10)
+				});
+
+				/**
+				 * Subtract the container width and height to center the img in zoomContainer.
+				*/
+				$bigImg.css({
+					 'top' 	: -((y * config['ratio']) - (config['zoomContainerWidth'] / 2))
+					,'left' : -((x * config['ratio']) - (config['zoomContainerHeight'] / 2))
+				
+				});
+			},
+
+			mouseleave : function() {
+				$zoomContainer.css({
+					'left' : '-9999px'				
+				});
+			}
+		};	
+			
+		if(	!config['bigImgWidth'] || !config['bigImgHeight'] || ! config['bigImgSrc'] ) {
 			return false;
 		}
 
 		/**
-		 * @param config ration		defines the ratio between big and small img
+		 * defines the ratio between big and small img.
 		*/
 		config['ratio'] = config['bigImgWidth'] / config['orgImgWidth']
 
 		/**
-		 * bigImg
-		 * @desc _self with big img for mousemove
+		 * The big img for mousemove.
 		*/		
-		var bigImg = $('<img src="' + config['bigImgSrc'] + '" width="' + config['bigImgWidth'] + '" height="' + config['bigImgHeight'] + '" />');
+		var $bigImg = $('<img>');
+		$bigImg.attr( {
+			'src' : config['bigImgSrc'],
+			'width' : config['bigImgWidth'],
+			'height' : config['bigImgHeight']
+		} );
 
 		/**
-		 * zoomContainer
-		 * @desc container for the big img
-				 insertet after the min img
-				 contains the zoom img
+		 * Container for the big img insertet after the min img contains the zoom img.
 		*/
-		var zoomContainer = $('<div class="zoom"></div>')
-					.insertAfter(_self)
-					.html(bigImg)
-					.css({
-						 'position' : 'fixed'
-						,'width' : config['zoomContainerWidth']
-						,'height' : config['zoomContainerHeight']
-					});
+		var $zoomContainer = $('<div class="zoom"></div>');
+		$zoomContainer.insertAfter($self).html($bigImg).css({
+			'position' : 'fixed',
+			'width' : config['zoomContainerWidth'],
+			'height' : config['zoomContainerHeight'],
+		});
 		
 		/**
-		 * mousemove
-		 @desc event for mousemove over the min img
+		 * binding the events
 		*/
-		_self.unbind('mouseenter').bind('mousemove', function(e){
-
-			var offset	=	_self.offset(),
-				offsetX	=	offset.left,
-				offsetY	=	offset.top,
-				x 		=	e.pageX - offsetX,
-				y		=	e.pageY - offsetY
-			;
-
-			/**
-			 * @desc position the zoomContainer
-			*/
-			zoomContainer.css({
-				 'top' 	: (e.clientY + 10)
-				,'left' : (e.clientX + 10)
-			});
-
-			/**
-			 * @desc position the big Img
-					 subtract the container width and height to center the img in zoomContainer
-			*/
-			bigImg.css({
-				 'top' 	: -((y * config['ratio']) - (config['zoomContainerWidth'] / 2))
-				,'left' : -((x * config['ratio']) - (config['zoomContainerHeight'] / 2))
-			
-			});
-		})
-		.bind('mouseleave', function(e){
-
-			zoomContainer.css({
-				'left' : '-9999px'				
-			});
-
-		});
+		$self
+			.unbind('mouseenter')
+			.bind('mousemove', HANDLER.mousemove )
+			.bind('mouseleave', HANDLER.mousemove );
 
 	}
 
